@@ -1,0 +1,6 @@
+@TestAAIbackend_HostAddress = http://localhost:5152
+
+GET {{TestAAIbackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
