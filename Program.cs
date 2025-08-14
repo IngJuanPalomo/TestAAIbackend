@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TestAAIbackend.Data;
@@ -6,16 +8,24 @@ using TestAAIbackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Obtener nombre del Key Vault desde configuración
+string keyVaultName = builder.Configuration["KeyVaultName"];
+var keyVaultUri = new Uri($"https://{keyVaultName}.vault.azure.net/");
 
-builder.Services.AddControllers();
+// 2. Usar Managed Identity para conectarse al Key Vault
+var credential = new DefaultAzureCredential();
+var secretClient = new SecretClient(keyVaultUri, credential);
 
-// Add DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// 3. Obtener cadena de conexión desde el secreto
+KeyVaultSecret secret = secretClient.GetSecret("SqlConnectionString");
+string connectionString = secret.Value;
+
+// 4. Configurar DbContext con la cadena obtenida (Add DbContext)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// DI: repository & services
+// Add services to the container (Controllers). DI: repository & services
+builder.Services.AddControllers();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
