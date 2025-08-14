@@ -9,18 +9,14 @@ using TestAAIbackend.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurar conexión con Azure Key Vault
-string keyVaultUrl = builder.Configuration["KeyVaultUrl"]; // ponlo en appsettings.json o en Azure App Settings
-
-if (string.IsNullOrEmpty(keyVaultUrl))
-{
-    throw new InvalidOperationException("KeyVaultUrl no está configurado en appsettings.json o en Azure App Settings.");
-}
+string keyVaultName = builder.Configuration["KeyVaultName"];
+var keyVaultUri = new Uri($"https://{keyVaultName}.vault.azure.net/"); // ponlo en appsettings.json o en Azure App Settings
 
 // 2. Crear cliente de Key Vault usando Managed Identity (RBAC)
-var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+var secretClient = new SecretClient(vaultUri: keyVaultUri, credential: new DefaultAzureCredential());
 
 // Obtiene la cadena de conexión desde Key Vault de manera asíncrona
-KeyVaultSecret secret = await client.GetSecretAsync("DbConnectionString");
+KeyVaultSecret secret = await secretClient.GetSecretAsync("DbConnectionString");
 string connectionString = secret.Value;
 
 // Add services to the container.
